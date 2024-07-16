@@ -1,0 +1,68 @@
+using Apache.NMS.ActiveMQ.Util.Synchronization;
+using MassTransit;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using msGestionePosizioni.Domain.Entities;
+using msGestionePosizioni.Domain.Infrastructure.Repository;
+using msGestionePosizioni.Infrastructure.Data;
+using System.Data;
+using System.Drawing;
+
+namespace msGestionePosizioni.Infrastructure.Repository
+{
+    public class RuoliRepository : IRuoliRepository
+    {
+        private readonly ArtComDbContext _dbContext;
+        private readonly ILogger<RuoliRepository> _logger;
+
+        public RuoliRepository(ArtComDbContext dbContext, ILogger<RuoliRepository> logger)
+        {
+            _dbContext = dbContext;
+            _logger = logger;
+        }
+
+        public async Task<IEnumerable<RuoloSoggetto>> GetStoricoRuoli(string codiceFiscale)
+        {
+            var ruoli = from posizione in _dbContext.Posizioni
+                        join soggettoPosizione in _dbContext.SoggettiPosizione
+                            on posizione.IdPosizione equals soggettoPosizione.IdPosizione
+                        join soggetto in _dbContext.Soggetti
+                            on soggettoPosizione.IdSoggetto equals soggetto.IdSoggetto
+                        join impresa in _dbContext.Imprese
+                            on posizione.IdImpresa equals impresa.IdImpresa
+                        where soggetto.CodiceFiscale == codiceFiscale
+                        select new RuoloSoggetto()
+                        {
+                            IdSoggettoPosizione = soggettoPosizione.IdSoggettoPosizione,
+                            CodiceAzienda = posizione.CodiceAzienda,
+                            CodicePosizione = posizione.CodicePosizione,
+                            NumeroRea = impresa.NumeroRea,
+                            ProvinciaRea = impresa.ProvinciaRea,
+                            RuoloAttivo = soggettoPosizione.IdStatoSoggettoPosizione == (int)StatoSoggettoPosizione.Attivo,
+                            TipoGestione = (TipoGestione)posizione.IdTipoGestione,
+                            TipoSoggetto = (TipoSoggetto)soggettoPosizione.IdTipoSoggetto
+                        };
+
+            return await ruoli.ToListAsync();
+        }
+
+        public async Task<TipoSoggetto?> GetTipoSoggettoAsync(string codiceFiscale)
+        {
+            var risultatoSql = from s in _dbContext.Soggetti
+                            join sp in _dbContext.SoggettiPosizione
+                                on s.IdSoggetto equals sp.IdSoggetto
+                            
+                            where s.CodiceFiscale == codiceFiscale && sp.IdStatoSoggettoPosizione == 1
+                            select (TipoSoggetto) sp.IdTipoSoggetto;
+
+           
+            if(!risultatoSql.Any())
+                return null;
+
+            if (risultatoSql.Count() > 1)
+                _logger.LogError("Errore per il {cf}", codiceFiscale);
+
+            return risultatoSql.First();
+        }
+    }
+}

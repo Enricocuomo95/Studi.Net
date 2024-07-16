@@ -1,0 +1,64 @@
+using msGestionePosizioni.Domain.Entities;
+
+namespace msGestionePosizioni.Domain.Services
+{
+    public static class EnumUtils
+    {
+        public static string ToTipoGestioneDescription(TipoGestione tipoGestione)
+        {
+            return tipoGestione switch
+            {
+                TipoGestione.Artigiani => "Artigiani",
+                TipoGestione.Commercianti => "Commercianti",
+                _ => throw new ArgumentOutOfRangeException(nameof(tipoGestione), $"Unexpected TipoGestione value: {tipoGestione}"),
+            };
+        }
+
+        public static string ToTipoSoggettoDescription(TipoSoggetto tipoSoggetto)
+        {
+            return tipoSoggetto switch
+            {
+                TipoSoggetto.Titolare => "Titolare",
+                TipoSoggetto.Collaboratore => "Collaboratore",
+                _ => throw new ArgumentOutOfRangeException(nameof(tipoSoggetto), $"Unexpected TipoSoggetto value: {tipoSoggetto}"),
+            };
+        }
+
+        //qui ho notato che sul db mi da codiceOperazione come un varchar di 5, ma non conosco i valori che sono presenti 
+        //nel db originale, per cui ho improvvisato al fine di rendere funzionale l'applicazione 
+        public static int ToIntFromOperazione(string codiceOperazione)
+        {
+            return codiceOperazione switch
+            {
+                "cod1" => 1,
+                "cod2" => 2,
+                _ => throw new ArgumentOutOfRangeException(nameof(codiceOperazione), $"Unexpected TipoSoggetto value: {codiceOperazione}"),
+            };
+        }
+
+        public static string ToTipoOperazione(TipoOperazione tipoOperazione)
+        {
+            return tipoOperazione switch
+            {
+                TipoOperazione.Iscrizione => "Iscrizione",
+                TipoOperazione.Cessazione => "Cessazione",
+                _ => throw new ArgumentOutOfRangeException(nameof(tipoOperazione), $"Unexpected TipoSoggetto value: {tipoOperazione}"),
+            };
+        }
+
+        //qui ci sono casi non coperti
+        public static string ToStatoElaborazioneDelibera(StatoElaborzioneDelibera statoElaborzioneDelibera)
+        {
+            return statoElaborzioneDelibera switch
+            {
+                StatoElaborzioneDelibera.DaElaborare => "In giacenza",
+                StatoElaborzioneDelibera.InElaborazione => "In lavorazione",
+                StatoElaborzioneDelibera.ElaborataDaOperatoreConSuccesso => "Acquisita",
+                StatoElaborzioneDelibera.ElaborataAutomaticamenteConSuccesso => "Acquisita",
+                StatoElaborzioneDelibera.EsclusaAutomaticamente => "Respinta",
+                StatoElaborzioneDelibera.EsclusaDaOperatore => "Respinta",
+                _ => throw new ArgumentOutOfRangeException(nameof(statoElaborzioneDelibera), $"Unexpected TipoSoggetto value: {statoElaborzioneDelibera}"),
+            };
+        }
+    }
+}

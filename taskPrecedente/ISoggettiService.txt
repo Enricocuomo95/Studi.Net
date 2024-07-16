@@ -1,0 +1,11 @@
+using msGestionePosizioni.Domain.Entities;
+
+namespace msGestionePosizioni.Domain.Services.Interfaces
+{
+    public interface ISoggettiService
+    {
+        Task<SoggettoArtCom> GetSoggettoAsync(string codiceFiscale);
+        Task<IEnumerable<SoggettiPosizione>> GetSoggettiByPosizioneAsync(long idAbbinamento);
+        Task<string> GetTipoSoggettoAsync(string codiceFiscale);
+    }
+}

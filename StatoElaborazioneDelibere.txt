@@ -1,0 +1,14 @@
+namespace msGestionePosizioni.Domain.Entities
+{
+    public enum StatoElaborzioneDelibera : int
+    {
+        DaElaborare = 1,
+        InElaborazione = 2,
+        ElaborataAutomaticamenteConSuccesso = 3,
+        ElaborataDaOperatoreConSuccesso = 4,
+        EsclusaAutomaticamente = 5,
+        EsclusaDaOperatore = 6,
+        PrenotataDaOperatore = 7,
+        InviataAllaSede = 8
+    }
+}

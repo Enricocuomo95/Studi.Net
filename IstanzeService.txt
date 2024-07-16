@@ -1,0 +1,34 @@
+using msGestionePosizioni.Domain.Entities;
+using msGestionePosizioni.Domain.Infrastructure.Repository;
+using msGestionePosizioni.Domain.Services.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace msGestionePosizioni.Domain.Services
+{
+    public class IstanzeService : IIstanzeService
+    {
+        //ATTENZIONE questa variabile non è stata scopizzata 
+        //dove devo inserire il settaggio per fare l'inniezione?
+        private readonly IIstanzeRepository _repository;
+
+        public IstanzeService(IIstanzeRepository repository)
+        {
+            _repository = repository;
+        }
+        public async Task<IEnumerable<Istanza>> GetBySoggettoAsync(string codiceFiscale)
+        {
+            List<Istanza> result = new();
+            return await Task.FromResult(result);
+        }
+
+        public async Task<Istanza?> GetIstanzaAsync(string codiceFiscale)
+        {
+            List<Istanza> result = new();
+            return await _repository.GetIstanzeAsync(codiceFiscale);
+        }
+    }
+}

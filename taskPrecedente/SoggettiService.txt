@@ -1,0 +1,49 @@
+using Microsoft.Extensions.Logging;
+using msGestionePosizioni.Domain.Entities;
+using msGestionePosizioni.Domain.Infrastructure.Repository;
+using msGestionePosizioni.Domain.Services.Interfaces;
+using System.Collections.Generic;
+
+namespace msGestionePosizioni.Domain.Services
+{
+    public class SoggettiService : ISoggettiService
+    {
+        private readonly ILogger<SoggettiService> _logger;
+        private readonly IAnagraficaRepository _arcaRepository;
+        private readonly IRuoliRepository _ruoliRepository;
+        private readonly ISoggettiRepository _soggettiRepository;
+
+        public SoggettiService(ILogger<SoggettiService> logger, IAnagraficaRepository arcaRepository, IRuoliRepository ruoliRepository, ISoggettiRepository soggettiRepository)
+        {
+            _logger = logger;
+            _arcaRepository = arcaRepository;
+            _ruoliRepository = ruoliRepository;
+            _soggettiRepository = soggettiRepository;
+        }
+
+        public Task<IEnumerable<SoggettiPosizione>> GetSoggettiByPosizioneAsync(long idAbbinamento)
+        {
+            return _soggettiRepository.GetByPosizioneAsync(idAbbinamento);
+        }
+
+        public async Task<SoggettoArtCom> GetSoggettoAsync(string codiceFiscale)
+        {
+            var anagrafica = await _arcaRepository.GetAnagrafica(codiceFiscale);
+            var ruoli = await _ruoliRepository.GetStoricoRuoli(codiceFiscale);
+            return new SoggettoArtCom()
+            {
+                Anagrafica = anagrafica,
+                StoricoRuoli = ruoli
+            };
+        }
+
+        public async Task<String> GetTipoSoggettoAsync(string codiceFiscale)
+        {
+            TipoSoggetto? ruolo = await _ruoliRepository.GetTipoSoggettoAsync(codiceFiscale);
+
+            if(!ruolo.HasValue)
+                return string.Empty;
+            return EnumUtils.ToTipoSoggettoDescription(ruolo.Value);
+        }
+    }
+}

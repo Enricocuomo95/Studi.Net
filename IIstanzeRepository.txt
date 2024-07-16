@@ -1,0 +1,9 @@
+using msGestionePosizioni.Domain.Entities;
+
+namespace msGestionePosizioni.Domain.Infrastructure.Repository
+{
+    public interface IIstanzeRepository
+    {
+        Task<Istanza?> GetIstanzeAsync(string codiceFiscale);
+    }
+}

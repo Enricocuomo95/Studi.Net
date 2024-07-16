@@ -1,0 +1,25 @@
+using msGestionePosizioni.Domain.Services.Interfaces;
+using msGestionePosizioni.Domain.Services;
+using msGestionePosizioni.Domain.Infrastructure.Repository;
+
+namespace msGestionePosizioni.API.Extensions
+{
+    public static partial class IServiceCollectionExtensions
+    {
+        private static IServiceCollection AddDomainServices(this IServiceCollection services)
+        {
+            services.AddScoped<IValidazioneIscrizioneService, ValidazioneIscrizioneService>();
+            services.AddScoped<IValidazioneCancellazioneService, ValidazioneCancellazioneService>();
+            services.AddScoped<IAttuazioneDelibereCancellazioniService, AttuazioneDelibereCancellazioniService>();
+            services.AddScoped<IAttuazioneDelibereService, AttuazioneDelibereService>();
+            services.AddScoped<IDatiLegacyService, DatiLegacyService>();
+            services.AddScoped<ISoggettiService, SoggettiService>();
+            services.AddScoped<IAnagraficaService, AnagraficaService>();
+            services.AddScoped<IIstanzeService, IstanzeService>(); 
+            services.AddScoped<IPosizioniService, PosizioniService>();
+            services.AddScoped<IImpreseService, ImpreseService>();
+            //services.AddScoped<IIstanzeRepository, IIstanzeRepository>();
+            return services;
+        }
+    }
+}

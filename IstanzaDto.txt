@@ -1,0 +1,21 @@
+using msGestionePosizioni.Domain.Entities;
+
+namespace msGestionePosizioni.API.Dtos
+{
+    /*N.B. Luca in questa classe ho riversato tutto il contenuto di Istanza.
+    Ho fatto bene? Devo fare information hiding?
+     * 
+     * 
+     */
+
+
+    public class IstanzaDto
+    {
+        public TipoGestione TipoGestione { get; set; }
+        public TipoOperazione TipoOperazione { get; set; }
+        public TipoSoggetto TipoSoggetto { get; set; }
+        public StatoElaborzioneDelibera StatoElaborzioneDelibera { get; set; }
+        public string Posizione { get; set; }
+        public DateTime? UltimoAggiornamento { get; set; }
+    }
+}

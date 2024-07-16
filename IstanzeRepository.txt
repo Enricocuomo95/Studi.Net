@@ -1,0 +1,54 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using msGestionePosizioni.Domain.Entities;
+using msGestionePosizioni.Domain.Infrastructure.Repository;
+using msGestionePosizioni.Domain.Services;
+using msGestionePosizioni.Infrastructure.Data;
+using System.Data;
+
+namespace msGestionePosizioni.Infrastructure.Repository
+{
+    internal class IstanzeRepository : IIstanzeRepository
+    {
+        private readonly ArtComDbContext _dbContext;
+
+        public IstanzeRepository(ArtComDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+    
+        public async Task<Istanza?> GetIstanzeAsync(string codiceFiscale)
+        {
+            var risultatoSql = from ds in _dbContext.DelibereSoggetti
+                               join dsp in _dbContext.DelibereSoggettiPosizione
+                                    on ds.IdDeliberaSoggetto equals dsp.IdDeliberaSoggetto
+                               join sp in _dbContext.SoggettiPosizione
+                                    on dsp.IdSoggettoPosizione equals sp.IdSoggettoPosizione
+                               join p in _dbContext.Posizioni
+                                    on sp.IdPosizione equals p.IdPosizione
+
+                                    //Posso avere più istanze in quenst'enumerable?
+                                    //Vale il discorso dell'altra volta? Ho notato che posso inserire più valori con lo stesso cf
+                               where ds.CodiceFiscale == codiceFiscale && sp.IdStatoSoggettoPosizione == 1
+                               select new Istanza
+                               {
+                                   TipoGestione = (TipoGestione) ds.IdTipoGestione,
+                                   TipoOperazione = (TipoOperazione) EnumUtils.ToIntFromOperazione(ds.CodiceOperazione),
+                                   TipoSoggetto = (TipoSoggetto) ds.IdTipoSoggetto,
+                                   //qui manca qualcosa in StatoElaborzioneDelibera
+                                   //per dettagli a riguardo vedere il metodo EnumUtils.ToStatoElaborazioneDelibera
+                                   //noterai che ci sono dei casi non coperti dal metodo
+                                   StatoElaborzioneDelibera = (StatoElaborzioneDelibera) ds.IdStatoElaborazione,
+                                   Posizione = p.CodicePosizione,
+                                   UltimoAggiornamento = ds.DataModifica == null ? ds.DataInserimento : ds.DataModifica
+                               };
+
+
+            if (!risultatoSql.Any())
+                return null;
+
+
+            return risultatoSql.First();
+        }
+    }
+}

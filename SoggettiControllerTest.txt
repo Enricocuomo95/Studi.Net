@@ -1,0 +1,95 @@
+using Microsoft.Extensions.Logging;
+using Moq;
+using msGestionePosizioni.Domain.Services.Interfaces;
+
+
+namespace msGestionePosizioni.UnitTest.API.Controller
+{
+    public class SoggettiControllerTest
+    {
+
+        private readonly Mock<ILogger<SoggettiControllerTest>> _mockLogger;
+        private readonly Mock<ISoggettiService> _mockSoggettiService;
+        private readonly Mock<IAnagraficaService> _mockAnagraficaService;
+        private readonly Mock<IAnagraficaMapp> _mockAnagraficaMapper;
+        private readonly SoggettiController _controller;
+
+        private const string CF_REGEX = "^[A-Z0-9]{16}$"; // Assumed regex for codice fiscale
+
+        public SoggettiControllerTests()
+        {
+            _mockLogger = new Mock<ILogger<SoggettiController>>();
+            _mockSoggettiService = new Mock<ISoggettiService>();
+            _mockAnagraficaService = new Mock<IAnagraficaService>();
+            _mockAnagraficaMapper = new Mock<IAnagraficaMapper>();
+            _controller = new SoggettiController(_mockLogger.Object, _mockSoggettiService.Object, _mockAnagraficaService.Object, _mockAnagraficaMapper.Object);
+        }
+
+        [Fact]
+        public async Task GetDatiAnagrafici_InvalidCodiceFiscale_ReturnsNotFound()
+        {
+            // Arrange
+            string invalidCodiceFiscale = "INVALID_CF";
+
+            // Act
+            var result = await _controller.GetDatiAnagrafici(invalidCodiceFiscale);
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundResult>(result);
+            _mockLogger.Verify(logger => logger.LogError(It.IsAny<string>(), invalidCodiceFiscale), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetDatiAnagrafici_AnagraficaNotFound_ReturnsNotFound()
+        {
+            // Arrange
+            string validCodiceFiscale = "VALIDCF1234567890";
+            _mockSoggettiService.Setup(service => service.GetTipoSoggettoAsync(validCodiceFiscale)).ReturnsAsync("SomeTipo");
+            _mockAnagraficaService.Setup(service => service.GetDatiAnagraficiAsync(validCodiceFiscale)).ReturnsAsync((Anagrafica)null);
+
+            // Act
+            var result = await _controller.GetDatiAnagrafici(validCodiceFiscale);
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundResul>(result);
+            _mockLogger.Verify(logger => logger.LogError(It.IsAny<string>(), validCodiceFiscale), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetDatiAnagrafici_ServiceThrowsException_ReturnsStatusCode500()
+        {
+            // Arrange
+            string validCodiceFiscale = "VALIDCF1234567890";
+            _mockSoggettiService.Setup(service => service.GetTipoSoggettoAsync(validCodiceFiscale)).ThrowsAsync(new Exception("Test exception"));
+
+            // Act
+            var result = await _controller.GetDatiAnagrafici(validCodiceFiscale);
+
+            // Assert
+            var statusCodeResult = Assert.IsType<StatusCodeResult>(result);
+            Assert.Equal(500, statusCodeResult.StatusCode);
+            _mockLogger.Verify(logger => logger.LogError(It.IsAny<Exception>(), It.IsAny<string>(), validCodiceFiscale), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetDatiAnagrafici_ValidRequest_ReturnsOk()
+        {
+            // Arrange
+            string validCodiceFiscale = "VALIDCF1234567890";
+            var mockAnagrafica = new Anagrafica(); // Assumed Anagrafica class
+            var mockAnagraficaDto = new AnagraficaDto(); // Assumed AnagraficaDto class
+
+            _mockSoggettiService.Setup(service => service.GetTipoSoggettoAsync(validCodiceFiscale)).ReturnsAsync("SomeTipo");
+            _mockAnagraficaService.Setup(service => service.GetDatiAnagraficiAsync(validCodiceFiscale)).ReturnsAsync(mockAnagrafica);
+            _mockAnagraficaMapper.Setup(mapper => mapper.Map(mockAnagrafica)).Returns(mockAnagraficaDto);
+
+            // Act
+            var result = await _controller.GetDatiAnagrafici(validCodiceFiscale);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(mockAnagraficaDto, okResult.Value);
+            Assert.Equal("SomeTipo", ((AnagraficaDto)okResult.Value).Tipologia);
+        }
+    }
+}

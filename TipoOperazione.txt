@@ -1,0 +1,8 @@
+namespace msGestionePosizioni.Domain.Entities
+{
+    public enum TipoOperazione : int
+    {
+        Iscrizione = 1,
+        Cessazione = 2
+    }
+}

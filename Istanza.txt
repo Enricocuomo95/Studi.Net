@@ -1,0 +1,20 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace msGestionePosizioni.Domain.Entities
+{
+    public class Istanza
+    {
+        public TipoGestione TipoGestione { get; set; }
+        public TipoOperazione TipoOperazione { get; set; }
+        public TipoSoggetto TipoSoggetto { get; set; }
+        public StatoElaborzioneDelibera StatoElaborzioneDelibera { get; set; }
+        public string Posizione { get; set; }
+        //DataTime? va bene ? O magari ci serve solo la data (DataOnly) 
+        //ho utilizzato questo approccio, perchè ho pensato che in questo modo sono più performante (vedere ternaria in IstanzaRepository)
+        public DateTime? UltimoAggiornamento { get; set; }
+    }
+}

@@ -1,0 +1,10 @@
+using msGestionePosizioni.Domain.Entities;
+
+namespace msGestionePosizioni.Domain.Services.Interfaces
+{
+    public interface IIstanzeService
+    {
+        Task<Istanza?> GetIstanzaAsync(string codiceFiscale);
+        Task<IEnumerable<Istanza>> GetBySoggettoAsync(string codiceFiscale);
+    }
+}

@@ -1,0 +1,126 @@
+using msGestionePosizioni.Domain.Mappers;
+using Microsoft.AspNetCore.Mvc;
+using msGestionePosizioni.API.Dtos;
+using msGestionePosizioni.Domain.Entities;
+using msGestionePosizioni.Domain.Services.Interfaces;
+using System.Text.RegularExpressions;
+
+// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+
+namespace msGestionePosizioni.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class SoggettiController : ControllerBase
+    {
+        private readonly ILogger<SoggettiController> _logger;
+        private readonly IAnagraficaService _anagraficaService;
+        private readonly ISoggettiService _soggettiService;
+        private readonly IIstanzeService _istanzeService;
+
+        private readonly IMapper<DatiAnagrafici, AnagraficaDto> _anagraficaMapper;
+        private readonly IMapper<Istanza, IstanzaDto> _istanzaMapper;
+        private readonly IMapper<RuoloSoggetto, PosizioneDto> _posizioneMapper;
+        private static readonly string CF_REGEX = "^[A-Z]{6}\\d{2}[A-Z]\\d{2}[A-Z]\\d{3}[A-Z]$";
+
+        public SoggettiController(ILogger<SoggettiController> logger, IAnagraficaService anagraficaService, ISoggettiService soggettiService,
+            IIstanzeService istanzeService, IMapper<DatiAnagrafici, AnagraficaDto> anagraficaMapper, IMapper<RuoloSoggetto, PosizioneDto> posizioneMapper, IMapper<Istanza, IstanzaDto> istanzaMapper)
+        {
+            _logger = logger;
+            _anagraficaService = anagraficaService;
+            _soggettiService = soggettiService;
+            _istanzeService = istanzeService;
+            _anagraficaMapper = anagraficaMapper;
+            _posizioneMapper = posizioneMapper;
+            _istanzaMapper = istanzaMapper;
+        }
+
+        [HttpGet("{codiceFiscale}")]
+        public async Task<IActionResult> Get(string codiceFiscale)
+        {
+            try
+            {
+                var anagrafica = await _anagraficaService.GetDatiAnagraficiAsync(codiceFiscale);
+                var soggettoArtCom = await _soggettiService.GetSoggettoAsync(codiceFiscale);
+                var istanze = await _istanzeService.GetBySoggettoAsync(codiceFiscale);
+                return Ok(new SoggettoDto()
+                {
+                    Anagrafica = anagrafica is null ? new() : _anagraficaMapper.Map(anagrafica),
+                    StoricoPosizioni = soggettoArtCom.StoricoRuoli.Select(sr => _posizioneMapper.Map(sr)),
+                    Istanze = istanze.Select(istanza => _istanzaMapper.Map(istanza)),
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante SoggettiController.Get per il codice fiscale {cf}", codiceFiscale);
+                return StatusCode(500);
+            }
+        }
+
+
+        [HttpGet("{codiceFiscale}/datianagrafici")]
+        public async Task<IActionResult> GetDatiAnagrafici(string codiceFiscale)
+        {
+            try
+            {
+                //Ciao Luca ho pensato a quello che mi dicevi ieri a proposito del'errore dell'utente (in arca non era presente il cf)
+                //Ma perchè non preveniamo sto errore?
+                //Ha senso interrogare il servizio Arca a priori?
+                //Qui ho inserito una espressione regolare (testata) che potrebbe aiutare
+                //Potremmo inoltre mettere questo controllo in tutte le chiamate http con l'ausilio di un interceptor
+                if (!Regex.IsMatch(codiceFiscale, CF_REGEX))
+                {
+                    _logger.LogError("Valore {codiceFiscale} non valido", codiceFiscale);
+                    return NotFound();
+                }
+
+                var tipoSoggetto = await _soggettiService.GetTipoSoggettoAsync(codiceFiscale);
+                var anagrafica = await _anagraficaService.GetDatiAnagraficiAsync(codiceFiscale);
+
+                if(anagrafica == null)
+                {
+                    _logger.LogError("Nessun dato anagrafico presente per il codice fiscale {codiceFiscale}", codiceFiscale);
+                    return NotFound();
+                }
+
+                var anagraficaDto = _anagraficaMapper.Map(anagrafica);
+                anagraficaDto.Tipologia = tipoSoggetto;
+                return Ok(anagraficaDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante SoggettiController.GetDatiAnagrafici per il codice fiscale {cf}", codiceFiscale);
+                return StatusCode(500);
+            }
+        }
+
+
+        [HttpGet("{codiceFiscale}/istanze")]
+        public async Task<IActionResult> GetIstanze(string codiceFiscale)
+        {
+            try
+            {
+                if (!Regex.IsMatch(codiceFiscale, CF_REGEX))
+                {
+                    _logger.LogError("Valore {codiceFiscale} non valido", codiceFiscale);
+                    return NotFound();
+                }
+
+                var istanze = await _istanzeService.GetIstanzaAsync(codiceFiscale);
+                if (istanze == null)
+                {
+                    _logger.LogError("Nessun datopresente per il codice fiscale {codiceFiscale}", codiceFiscale);
+                    return NotFound();
+                }
+
+                return Ok(_istanzaMapper.Map(istanze));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante SoggettiController.GetDatiAnagrafici per il codice fiscale {cf}", codiceFiscale);
+                return StatusCode(500);
+            }
+        }
+
+    }
+}
